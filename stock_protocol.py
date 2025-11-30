@@ -21,17 +21,27 @@ class StockProtocol(asyncio.DatagramProtocol):
         try:
             request = json.loads(data.decode())
             api_key = request.get("api_key")
-            trnm = request.get("trnm")
+            trnms_req = request.get("trnm")
             refresh = request.get("refresh", "1")  # 기본값을 "1"로 설정
 
             if not api_key:
                 logging.warning(f"API key is missing from request: {addr}")
                 return
 
+            # Ensure trnms is a list
+            if trnms_req is None:
+                trnms = []
+            elif isinstance(trnms_req, str):
+                trnms = [item.strip() for item in trnms_req.split(',')]
+            elif isinstance(trnms_req, list):
+                trnms = trnms_req
+            else:
+                trnms = []
+
             # refresh="1" 이면 구독 정보 초기화 및 trnm 등록
             if refresh == "1":
-                client_subscriptions[api_key] = {"trnms": [trnm] if trnm else [], "addr": addr}
-                logging.info(f"Subscribed: {api_key}, trnm: {trnm}, addr: {addr}")
+                client_subscriptions[api_key] = {"trnms": trnms, "addr": addr}
+                logging.info(f"Subscribed: {api_key}, trnms: {trnms}, addr: {addr}")
 
             # refresh="0" 이면 구독 정보 삭제
             elif refresh == "0":
@@ -46,13 +56,14 @@ class StockProtocol(asyncio.DatagramProtocol):
             # refresh 값이 다른 경우, 기존 구독에 trnm 추가
             else:
                 if api_key in client_subscriptions:
-                    if trnm and trnm not in client_subscriptions[api_key]["trnms"]:
-                        client_subscriptions[api_key]["trnms"].append(trnm)
-                        logging.info(f"Added trnm: {trnm} for api_key: {api_key}")
+                    for trnm in trnms:
+                        if trnm and trnm not in client_subscriptions[api_key]["trnms"]:
+                            client_subscriptions[api_key]["trnms"].append(trnm)
+                            logging.info(f"Added trnm: {trnm} for api_key: {api_key}")
                 else:
                     # refresh=1 없이 요청이 오면 새로 구독
-                    client_subscriptions[api_key] = {"trnms": [trnm] if trnm else [], "addr": addr}
-                    logging.info(f"Implicitly Subscribed: {api_key}, trnm: {trnm}, addr: {addr}")
+                    client_subscriptions[api_key] = {"trnms": trnms, "addr": addr}
+                    logging.info(f"Implicitly Subscribed: {api_key}, trnms: {trnms}, addr: {addr}")
 
 
             # 현재 구독 정보에 따라 응답 생성
