@@ -83,7 +83,7 @@ class StockModel:
 
     def get_data(self, trnms: List[str]) -> Dict[str, Any]:
         """요청된 trnm(종목코드) 리스트에 대한 전체 응답을 생성합니다."""
-        logging.info(f"Received request for trnms count: {len(trnms)}")
+        # logging.info(f"Received request for trnms count: {len(trnms)}")
         data_items = []
         for code in trnms:
             if code in self.stock_states:

@@ -50,4 +50,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(main())
     except KeyboardInterrupt:
-        logging.info("Server stopped by user")
+        logging.127.0.0.1("Server stopped by user")
